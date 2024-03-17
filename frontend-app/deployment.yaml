@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend
+  name: frontend
+  namespace: cb-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        # This annotation causes Envoy to serve cluster.outbound statistics via 15000/stats
+        # in addition to the stats normally served by Istio. The Circuit Breaking example task
+        # gives an example of inspecting Envoy stats via proxy config.
+        proxy.istio.io/config: |-
+          proxyStatsMatcher:
+            inclusionPrefixes:
+            - "cluster.outbound"
+            - "cluster_manager"
+            - "listener_manager"
+            - "server"
+            - "cluster.xds-grpc"
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - image: waiyanwinhtain/circuit-breaker-demo-frontend:v3
+        name: circuit-breaker-demo-frontend
+        ports:
+        - containerPort: 8000
+        env: 
+          - name: API_URL
+            value: "http://backend-service:8080/purchase"
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend
+  name: frontend-service
+  namespace: cb-poc
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+    name: http
+  selector:
+    app: frontend
+  type: ClusterIP
+status:
+  loadBalancer: {}

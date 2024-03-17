@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backend-service
+spec:
+  host: backend-service.backend.svc.cluster.local
+  trafficPolicy:
+    connectionPool: 
+      tcp:
+        maxConnections: 100  # Limit the maximum number of TCP connections ....
+      http:
+        http1MaxPendingRequests: 1000 # Max pending request ... 
+        maxRequestsPerConnection: 10 # Max request per connection
+    outlierDetection: # to eject(stop sending requests to) instance of backend-service after consecutive Errors
+      consecutive5xxErrors: 7
+      interval: 5m # 
+      baseEjectionTime: 15m # The ejected instances of backend-services are removed from the loadbalancing pool for 15s 
+    portLevelSettings:
+    - port:
+        number: 8080
+      loadBalancer:
+        simple: ROUND_ROBIN # Configure loadbalancing around the backend-service instance

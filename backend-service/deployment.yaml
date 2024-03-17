@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: backend
+  name: backend
+  namespace: cb-poc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: backend
+    spec:
+      containers:
+      - image: waiyanwinhtain/circuit-breaker-demo-backend:v1
+        name: circuit-breaker-demo-backend
+        ports:
+        - containerPort: 8080
+        env: 
+          - name: ERROR_RATE
+            value: "0.5"
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: backend
+  name: backend-service
+  namespace: cb-poc
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+    name: http
+  selector:
+    app: backend
+  type: ClusterIP
+status:
+  loadBalancer: {}
